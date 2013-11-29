@@ -1,0 +1,5 @@
+*.pyc
+.spyderworkspace
+.spyderproject
+.DS_Store
+.idea
