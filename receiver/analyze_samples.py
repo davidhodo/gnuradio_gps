@@ -33,7 +33,7 @@ if __name__ == '__main__':
                       help="Length of data to analyze [default=%default]")
     parser.add_option("-p", "--plot", action="store_true", dest="plot",
                       help="Plot data samples. [default=%default]")
-    parser.add_option("-h", "--hist", action="store_true", dest="histogram",
+    parser.add_option("--hist", action="store_true", dest="histogram",
                       help="Plot histogram of data samples. [default=%default]")
 
     (options, args) = parser.parse_args()
@@ -59,9 +59,20 @@ if __name__ == '__main__':
     std_dev = numpy.std(data_chunk)
     print(std_dev)
 
-    if options.histogram:
-        print("Plotting hisogram.")
-        plt.hist(data_chunk, bins=100)
-    #print(std_dev_imag)
-    # plt.hist(real_vector[1:200000], bins=100)
-    # plt.show()
+    if options.histogram and options.plot:
+        print("Plotting histogram and samples.")
+        plt.subplot(121)
+        plt.hist(numpy.real(data_chunk), bins=100)
+        plt.subplot(122)
+        plt.plot(numpy.real(data_chunk))
+        plt.show()
+    elif options.plot:
+        print("Plotting samples.")
+        plt.plot(numpy.real(data_chunk))
+        plt.show()
+    elif options.histogram:
+        print("Plotting histogram.")
+        plt.hist(numpy.real(data_chunk), bins=100)
+        plt.show()
+
+
