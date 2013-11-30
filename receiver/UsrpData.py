@@ -74,7 +74,7 @@ class USRPData(object):
         if self.file_format == "fc32":
             unpacked = struct.unpack('ff', sample_bytes)
             # TODO: check the order of this, 0 then 1??
-            return [complex(unpacked[0], unpacked[1])]
+            return complex(unpacked[0], unpacked[1])
         elif self.file_format == "sc16":
             unpacked = struct.unpack('hh', sample_bytes)
             return complex(unpacked[0], unpacked[1])
