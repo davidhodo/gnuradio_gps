@@ -34,7 +34,7 @@ class Acquisition(object):
                 logger.info('Acquisition.acquire():\tnot visible with mag ' + str(acq[0]))
         return visible
 
-    def acquire_parallel(self, data, prn, plot=True, freq_estimate=None, delay=None):
+    def acquire_parallel(self, data, prn, plot=False, freq_estimate=None, delay=None):
         if delay is None:
             data_1ms = data.read_array(pull = True)
         else:
