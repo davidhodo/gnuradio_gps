@@ -18,7 +18,7 @@ logger = logging.getLogger('soft')
 
 
 class Acquisition(object):
-    def acquire(self, data, threshold=2.5):
+    def acquire(self, data, plot=False, threshold=2.5):
         visible = []
         for prn in range(1, 33):
             logger.info('Acquisition.acquire():searching for prn ' + str(prn))
@@ -26,7 +26,7 @@ class Acquisition(object):
             acq2 = self.acquire_parallel(data, prn, delay=0.001)
             acq = acq1 if acq1[0] > acq2[0] else acq2
             if acq[0] > threshold:
-                acq = self.acquire_parallel(data, prn, freq_estimate=acq[1])
+                acq = self.acquire_parallel(data, prn, plot, freq_estimate=acq[1])
                 logger.info('Acquisition.acquire():\tfound at doppler ' + str(acq[1]) + ' and code phase ' + str(acq[2]) + ' with mag ' + str(acq[0]))
                 logger.info('Acquisition.acquire():acquired:' + str((prn, acq[1], acq[2])))
                 visible.append((prn, acq[1], acq[2]+data.tell()))
@@ -82,7 +82,6 @@ class Acquisition(object):
         else:
             search_list = best_list[int((best[2]+chip_width+1) % len(best_list)):int((best[2]-chip_width) % len(best_list))]
         next_best = max(search_list)
-        #import pdb; pdb.set_trace()
         if plot:
             import pylab
             from mpl_toolkits.mplot3d import Axes3D
@@ -169,5 +168,8 @@ if __name__ == '__main__':
     print(filename)
     data_store = UsrpData.USRPData(filename, f_s=options.rate, f_if=options.f_if, file_format=options.format)
 
+    if (options.delay>0):
+        data_store.delay(options.delay)
+
     acq_object = Acquisition()
-    acq_object.acquire(data_store, threshold=options.threshold)
+    acq_object.acquire(data_store, plot=options.plot, threshold=options.threshold)
