@@ -2,7 +2,9 @@
 
 import struct
 from numpy import array, zeros, eye
-
+from optparse import OptionParser
+import sys
+import os
 
 class USRPData(object):
     def __init__(self, file_name, f_s=25.0e6, f_if=0.0,
@@ -14,7 +16,7 @@ class USRPData(object):
         self.file_format = file_format
         self.loaded = []
         self.loaded_index = -1
-        self.complex=True
+        self.complex = True
         if self.file_format == "fc32":
             self.bytes_per_sample = 8
         else:
@@ -40,7 +42,7 @@ class USRPData(object):
         else:
             return data_samples
 
-    def delay(self, delay_time=0.):
+    def delay(self, delay_time=0.001):
         """Delay into the data file"""
         bytes_to_delay = int(round(delay_time * self.f_s)) * self.bytes_per_sample
         self.data_source.seek(bytes_to_delay)
@@ -83,10 +85,31 @@ class USRPData(object):
             return None
 
 if __name__ == '__main__':
-    test = USRPData("/Volumes/USRP_Data/splitter_and_20db_amp/usrp_data_25.0Msps_sc16_28.0dB_2013_11_26-22_01_32.bin")
-    result = test.read()
+
+    parser = OptionParser(usage="%prog: [options] filename")
+    parser.add_option("-r", "--rate", type="float", default=25.0e6,
+                      metavar="Hz", help="Sample frequency (f_s) [default=%default]")
+    parser.add_option("-i", "--f_if", type="float", default=0.0,
+                      metavar="Hz", help="Intermediate frequency (f_if) [default=%default]")
+    parser.add_option("-f", "--format", type="string", default="sc16",
+                      help="File format {sc16, fc32, ??} [default=%default]")
+
+    (options, args) = parser.parse_args()
+
+    if len(args) != 1:
+        parser.print_help()
+        sys.exit(1)
+
+    filename = args[0]
+    if not os.path.isfile(filename):
+        print("File does not exist: " + filename)
+        sys.exit(1)
+
+    print("Opening file:")
+    print(filename)
+    data_store = USRPData(filename, f_s=options.rate, f_if=options.f_if, file_format=options.format)
+
+    result = data_store.read()
     print("Size: " + str(len(result)))
-    print("First 10 samples:")
-    print(result[1:10])
-    print("Last 10 samples:")
-    print(result[-10:])
+    print("First 20 samples:")
+    print(result[1:20])
