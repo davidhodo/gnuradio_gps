@@ -14,6 +14,7 @@ from gnuradio.filter import firdes
 from optparse import OptionParser
 import time
 import os
+import sys
 
 
 class top_block(gr.top_block):
