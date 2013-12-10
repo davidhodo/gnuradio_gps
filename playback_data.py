@@ -13,6 +13,7 @@ from gnuradio.eng_option import eng_option
 from gnuradio.filter import firdes
 from optparse import OptionParser
 import time
+import os
 
 
 class top_block(gr.top_block):
@@ -23,15 +24,17 @@ class top_block(gr.top_block):
         parser = OptionParser(option_class=eng_option, usage="%prog: [options] filename")
         parser.add_option("-r", "--rate", type="eng_float", default=25e6,
             metavar="samples/second", help="Sample rate [default=%default]")
+        parser.add_option("-b", "--bw", type="eng_float", default=0,
+            metavar="Hz", help="Bandwidth [default=%default]")
         parser.add_option("-o", "--offset", type="eng_float", default=0,
             metavar="Hz", help="Local oscillator offset - Hz [default=%default]")
-        parser.add_option("-g", "--gain", type="eng_float", default=28                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         ,
+        parser.add_option("-g", "--gain", type="eng_float", default=30                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         ,
             metavar="dB", help="RX front-end gain [default=%default]")
         parser.add_option("-f", "--format", type="string", default="sc16",
             help="File format: {sc16, fc32, ??} [default=%default]")
         parser.add_option("-w", "--wire_format", type="string", default="sc16",
             help="Wire format: {sc8, sc16} [default=%default]")        
-        parser.add_option("", "--freq", type="eng_float", default=1.57542e6,
+        parser.add_option("", "--freq", type="eng_float", default=1.57542e9,
             metavar="Hz", help="Center frequency [default=%default]")
 
         (options, args) = parser.parse_args()
@@ -40,9 +43,9 @@ class top_block(gr.top_block):
             parser.print_help()
             sys.exit(1)
 
-        filename = args[0]
-        if not os.path.isfile(filename):
-            print("File does not exist: " + filename)
+        self.filename = args[0]
+        if not os.path.isfile(self.filename):
+            print("File does not exist: " + self.filename)
             sys.exit(1)
 
         ##################################################
@@ -52,10 +55,9 @@ class top_block(gr.top_block):
         self.lo_off = lo_off = options.offset
         self.freq_l1 = freq_l1 = options.freq
         self.gain = gain = options.gain
-        self.record_time = record_time = options.time
         self.file_format = file_format = options.format
         self.wire_format = wire_format = options.wire_format
-        self.directory = args[0]
+        self.bandwidth = options.bw
 
         ##################################################
         # Blocks
@@ -64,7 +66,7 @@ class top_block(gr.top_block):
             device_addr="",
             stream_args=uhd.stream_args(
                 cpu_format=self.file_format,
-                otw_format=self.wire_format
+                otw_format=self.wire_format,
                 channels=range(1),
             ),
         )
@@ -73,12 +75,11 @@ class top_block(gr.top_block):
         self.uhd_usrp_sink_0.set_center_freq(self.freq_l1, 0)
         self.uhd_usrp_sink_0.set_gain(self.gain, 0)
         self.uhd_usrp_sink_0.set_antenna("TX/RX", 0)
-        #self.uhd_usrp_sink_0.set_bandwidth(1e6, 0)
+        #self.uhd_usrp_sink_0.set_bandwidth(self.bandwidth, 0)
         if self.file_format == "fc32":
-            self.blocks_file_source_0 = blocks.file_source(gr.sizeof_float*2, self.filename, True)
+            self.blocks_file_source_0 = blocks.file_source(gr.sizeof_float*2, self.filename, False)
         else:
-            self.blocks_file_source_0 = blocks.file_source(gr.sizeof_short*2, self.filename, True)
-
+            self.blocks_file_source_0 = blocks.file_source(gr.sizeof_short*2, self.filename, False)
 
         ##################################################
         # Connections

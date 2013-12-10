@@ -23,6 +23,8 @@ class top_block(gr.top_block):
         parser = OptionParser(option_class=eng_option, usage="%prog: [options] directory")
         parser.add_option("-r", "--rate", type="eng_float", default=25e6,
             metavar="samples/second", help="Sample rate [default=%default]")
+        parser.add_option("-b", "--bw", type="eng_float", default=0,
+            metavar="Hz", help="Bandwidth [default=%default]")
         parser.add_option("-o", "--offset", type="eng_float", default=0,
             metavar="Hz", help="Local oscillator offset - Hz [default=%default]")
         parser.add_option("-g", "--gain", type="eng_float", default=28                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         ,
@@ -33,7 +35,7 @@ class top_block(gr.top_block):
             help="File format: {sc16, fc32, ??} [default=%default]")
         parser.add_option("-w", "--wire_format", type="string", default="sc16",
             help="Wire format: {sc8, sc16} [default=%default]")        
-        parser.add_option("", "--freq", type="eng_float", default=1.57542e6,
+        parser.add_option("", "--freq", type="eng_float", default=1.57542e9,
             metavar="Hz", help="Center frequency [default=%default]")
 
         (options, args) = parser.parse_args()
@@ -53,6 +55,7 @@ class top_block(gr.top_block):
         self.file_format = file_format = options.format
         self.wire_format = wire_format = options.wire_format
         self.directory = directory = args[0]
+        self.bandwidth = options.bw
 
         self.filename = directory + "usrp_data_" + str(samp_rate/1e6) + "Msps_" + file_format + "_" + str(gain) + "dB_" +  time.strftime("%Y_%m_%d-%H_%M_%S") + ".bin"
 
@@ -72,12 +75,11 @@ class top_block(gr.top_block):
         self.uhd_usrp_source_0.set_center_freq(uhd.tune_request(freq_l1, lo_off), 0)
         self.uhd_usrp_source_0.set_gain(gain, 0)
         self.uhd_usrp_source_0.set_antenna("RX2", 0)
-        #self.uhd_usrp_source_0.set_bandwidth(20e6, 0)
-        import pdb; pdb.set_trace()
+        self.uhd_usrp_source_0.set_bandwidth(self.bandwidth, 0)
         if self.file_format == "fc32":
             self.blocks_file_sink_0 = blocks.file_sink(gr.sizeof_float*2, self.filename, False)
         else:
-            self.blocks_file_sink_0 = blocks.file_sink(gr.sizeof_int*1, self.filename, False)
+            self.blocks_file_sink_0 = blocks.file_sink(gr.sizeof_short*2, self.filename, False)
 
         ##################################################
         # Connections
