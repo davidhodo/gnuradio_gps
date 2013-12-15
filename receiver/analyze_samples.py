@@ -21,7 +21,7 @@ if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
     parser = OptionParser(usage="%prog: [options] filename")
-    parser.add_option("-d", "--delay", type="float", default=1.0,
+    parser.add_option("-d", "--delay", type="float", default=5.0,
                       metavar="seconds", help="Time to delay into file before processing [default=%default]")
     parser.add_option("-r", "--rate", type="float", default=25.0e6,
                       metavar="Hz", help="Sample frequency (f_s) [default=%default]")
@@ -62,7 +62,7 @@ if __name__ == '__main__':
     if options.histogram and options.plot:
         print("Plotting histogram and samples.")
         plt.subplot(121)
-        plt.hist(numpy.real(data_chunk), bins=100)
+        plt.hist(numpy.real(data_chunk), bins=256)
         plt.subplot(122)
         plt.plot(numpy.real(data_chunk))
         plt.show()
@@ -72,7 +72,7 @@ if __name__ == '__main__':
         plt.show()
     elif options.histogram:
         print("Plotting histogram.")
-        plt.hist(numpy.real(data_chunk), bins=100)
+        plt.hist(numpy.real(data_chunk), bins=256)
         plt.show()
 
 
