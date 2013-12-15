@@ -37,6 +37,8 @@ class top_block(gr.top_block):
             help="Wire format: {sc8, sc16} [default=%default]")        
         parser.add_option("", "--freq", type="eng_float", default=1.57542e9,
             metavar="Hz", help="Center frequency [default=%default]")
+        parser.add_option("-a", "--stream_args", type="string", default="s",
+            help="Stream arguments [default=%default]") 
 
         (options, args) = parser.parse_args()
 
@@ -47,17 +49,18 @@ class top_block(gr.top_block):
         ##################################################
         # Variables
         ##################################################
-        self.samp_rate = samp_rate = options.rate
-        self.lo_off = lo_off = options.offset
-        self.freq_l1 = freq_l1 = options.freq
-        self.gain = gain = options.gain
-        self.record_time = record_time = options.time
-        self.file_format = file_format = options.format
-        self.wire_format = wire_format = options.wire_format
+        self.samp_rate =  options.rate
+        self.lo_off =  options.offset
+        self.freq_l1 =  options.freq
+        self.gain = options.gain
+        self.record_time = options.time
+        self.file_format = options.format
+        self.wire_format = options.wire_format
         self.directory = directory = args[0]
         self.bandwidth = options.bw
+        self.stream_args = options.stream_args
 
-        self.filename = directory + "usrp_data_" + str(samp_rate/1e6) + "Msps_" + file_format + "_" + str(gain) + "dB_" +  time.strftime("%Y_%m_%d-%H_%M_%S") + ".bin"
+        self.filename = directory + "usrp_data_" + str(self.samp_rate/1e6) + "Msps_" + self.file_format + "_" + str(self.gain) + "dB_" +  time.strftime("%Y_%m_%d-%H_%M_%S") + ".bin"
 
         ##################################################
         # Blocks
@@ -65,15 +68,16 @@ class top_block(gr.top_block):
         self.uhd_usrp_source_0 = uhd.usrp_source(
             device_addr="",
             stream_args=uhd.stream_args(
-                cpu_format=file_format,
-                otw_format=wire_format,
+                cpu_format=self.file_format,
+                otw_format=self.wire_format,
                 channels=range(1),
+                args=self.stream_args,
             ),
         )
         self.uhd_usrp_source_0.set_clock_source("gpsdo", 0)
-        self.uhd_usrp_source_0.set_samp_rate(samp_rate)
-        self.uhd_usrp_source_0.set_center_freq(uhd.tune_request(freq_l1, lo_off), 0)
-        self.uhd_usrp_source_0.set_gain(gain, 0)
+        self.uhd_usrp_source_0.set_samp_rate(self.samp_rate)
+        self.uhd_usrp_source_0.set_center_freq(uhd.tune_request(self.freq_l1, self.lo_off), 0)
+        self.uhd_usrp_source_0.set_gain(self.gain, 0)
         self.uhd_usrp_source_0.set_antenna("RX2", 0)
         self.uhd_usrp_source_0.set_bandwidth(self.bandwidth, 0)
         if self.file_format == "fc32":
@@ -86,32 +90,18 @@ class top_block(gr.top_block):
         ##################################################
         self.connect((self.uhd_usrp_source_0, 0), (self.blocks_file_sink_0, 0))
 
-    def get_samp_rate(self):
-        return self.samp_rate
-
-    def set_samp_rate(self, samp_rate):
-        self.samp_rate = samp_rate
-        self.uhd_usrp_source_0.set_samp_rate(self.samp_rate)
-
-    def get_lo_off(self):
-        return self.lo_off
-
-    def set_lo_off(self, lo_off):
-        self.lo_off = lo_off
-        self.uhd_usrp_source_0.set_center_freq(uhd.tune_request(self.freq_l1, self.lo_off), 0)
-
-    def get_freq_l1(self):
-        return self.freq_l1
-
-    def set_freq_l1(self, freq_l1):
-        self.freq_l1 = freq_l1
-        self.uhd_usrp_source_0.set_center_freq(uhd.tune_request(self.freq_l1, self.lo_off), 0)
-
 if __name__ == '__main__':
     tb = top_block()
     tb.start()
     print("Recording for " + str(tb.record_time) + " seconds to file:")
     print(tb.filename)
+    # check gpsdo status
+    print(tb.uhd_usrp_source_0.get_mboard_sensor("gps_locked"))
+    print(tb.uhd_usrp_source_0.get_mboard_sensor("gps_time"))
+    print(tb.uhd_usrp_source_0.get_mboard_sensor("gps_gpgga"))
+    print(tb.uhd_usrp_source_0.get_mboard_sensor("ref_locked"))
+
+
     time.sleep(tb.record_time)
     tb.stop()
     print("Recording finished.")
