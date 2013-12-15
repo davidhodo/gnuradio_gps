@@ -136,10 +136,10 @@ class Acquisition(object):
 
 if __name__ == '__main__':
 
-    logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+    #logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
     parser = OptionParser(usage="%prog: [options] filename")
-    parser.add_option("-d", "--delay", type="float", default=1.0,
+    parser.add_option("-d", "--delay", type="float", default=5.0,
         metavar="seconds", help="Time to delay into file before processing [default=%default]")
     parser.add_option("-r", "--rate", type="float", default=25.0e6,
         metavar="Hz", help="Sample frequency (f_s) [default=%default]")
@@ -172,4 +172,6 @@ if __name__ == '__main__':
         data_store.delay(options.delay)
 
     acq_object = Acquisition()
-    acq_object.acquire(data_store, plot=options.plot, threshold=options.threshold)
+    visible_svs = acq_object.acquire(data_store, plot=options.plot, threshold=options.threshold)
+    print(str(len(visible_svs))+ " Visible Svs:")
+    print(visible_svs)
