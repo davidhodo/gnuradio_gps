@@ -37,7 +37,9 @@ class top_block(gr.top_block):
             help="Wire format: {sc8, sc16} [default=%default]")        
         parser.add_option("", "--freq", type="eng_float", default=1.57542e9,
             metavar="Hz", help="Center frequency [default=%default]")
-        parser.add_option("-a", "--stream_args", type="string", default="s",
+        parser.add_option("-a", "--stream_args", type="string", default="",
+            help="Stream arguments [default=%default]") 
+        parser.add_option("-c", "--clock_source", type="string", default="gpsdo",
             help="Stream arguments [default=%default]") 
 
         (options, args) = parser.parse_args()
@@ -59,8 +61,7 @@ class top_block(gr.top_block):
         self.directory = directory = args[0]
         self.bandwidth = options.bw
         self.stream_args = options.stream_args
-
-        self.filename = directory + "usrp_data_" + str(self.samp_rate/1e6) + "Msps_" + self.file_format + "_" + str(self.gain) + "dB_" +  time.strftime("%Y_%m_%d-%H_%M_%S") + ".bin"
+        self.clock_source = options.clock_source
 
         ##################################################
         # Blocks
@@ -74,12 +75,40 @@ class top_block(gr.top_block):
                 args=self.stream_args,
             ),
         )
-        self.uhd_usrp_source_0.set_clock_source("gpsdo", 0)
+
+        print("Wire format: " + self.wire_format)
+        print("File format: " + self.file_format+"\n")
+
+        print("\nSetting clock source to: " + str(self.clock_source))
+        self.uhd_usrp_source_0.set_clock_source(self.clock_source, 0)
+        print("Actual clock source: " + self.uhd_usrp_source_0.get_clock_source(0) + "\n")
+
+        print("Setting sample rate to: " + str(self.samp_rate/1e6) + " Msps")
         self.uhd_usrp_source_0.set_samp_rate(self.samp_rate)
+        print("Actual sample rate: " + str(self.uhd_usrp_source_0.get_samp_rate()/1e6)+" Msps\n")
+
+        print("Setting center freq to: " + str(self.freq_l1/1e6) + " MHz") 
         self.uhd_usrp_source_0.set_center_freq(uhd.tune_request(self.freq_l1, self.lo_off), 0)
+        print("Actual center freq: " + str(self.uhd_usrp_source_0.get_center_freq()/1e6) + " MHz\n")
+
+        print("Gain names " + str(self.uhd_usrp_source_0.get_gain_names()))
+        print("Gain range " + str(self.uhd_usrp_source_0.get_gain_range()))
+        print("Setting gain to: " + str(self.gain) + " dB")
         self.uhd_usrp_source_0.set_gain(self.gain, 0)
+        print("Actual gain: " + str(self.uhd_usrp_source_0.get_gain()) + " dB\n")
+
+        print("Possible antennas: " + str(self.uhd_usrp_source_0.get_antennas()))
+        print("Setting antenna to: RX2")
         self.uhd_usrp_source_0.set_antenna("RX2", 0)
+        print("Actual antenna: " + self.uhd_usrp_source_0.get_antenna() + "\n")
+
+        print("Bandwidth range: " + str(self.uhd_usrp_source_0.get_bandwidth_range()))
+        print("Setting bandwidth to: " + str(self.bandwidth))
         self.uhd_usrp_source_0.set_bandwidth(self.bandwidth, 0)
+        print("Actual bandwidth: " + str(self.uhd_usrp_source_0.get_bandwidth()) + "\n")
+
+        self.filename = directory + "usrp_data_" + str(self.samp_rate/1e6) + "Msps_" + self.file_format + "_" + str(self.gain) + "dB_" +  time.strftime("%Y_%m_%d-%H_%M_%S") + ".bin"
+
         if self.file_format == "fc32":
             self.blocks_file_sink_0 = blocks.file_sink(gr.sizeof_float*2, self.filename, False)
         else:
@@ -95,10 +124,14 @@ if __name__ == '__main__':
     tb.start()
     print("Recording for " + str(tb.record_time) + " seconds to file:")
     print(tb.filename)
+
+    print("")
     # check gpsdo status
+    #print(tb.uhd_usrp_source_0.get_mboard_sensor("lo_locked"))
     print(tb.uhd_usrp_source_0.get_mboard_sensor("gps_locked"))
     print(tb.uhd_usrp_source_0.get_mboard_sensor("gps_time"))
     print(tb.uhd_usrp_source_0.get_mboard_sensor("gps_gpgga"))
+    print(tb.uhd_usrp_source_0.get_mboard_sensor("gps_gprmc"))
     print(tb.uhd_usrp_source_0.get_mboard_sensor("ref_locked"))
 
 
