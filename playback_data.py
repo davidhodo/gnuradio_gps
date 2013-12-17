@@ -37,6 +37,8 @@ class top_block(gr.top_block):
             help="Wire format: {sc8, sc16} [default=%default]")        
         parser.add_option("", "--freq", type="eng_float", default=1.57542e9,
             metavar="Hz", help="Center frequency [default=%default]")
+        parser.add_option("-a", "--stream_args", type="string", default="s",
+            help="Stream arguments [default=%default]") 
 
         (options, args) = parser.parse_args()
 
@@ -59,6 +61,8 @@ class top_block(gr.top_block):
         self.file_format = file_format = options.format
         self.wire_format = wire_format = options.wire_format
         self.bandwidth = options.bw
+        self.stream_args = options.stream_args
+
 
         ##################################################
         # Blocks
@@ -69,8 +73,10 @@ class top_block(gr.top_block):
                 cpu_format=self.file_format,
                 otw_format=self.wire_format,
                 channels=range(1),
+                args=self.stream_args,
             ),
         )
+
         self.uhd_usrp_sink_0.set_clock_source("gpsdo", 0)
         self.uhd_usrp_sink_0.set_samp_rate(self.samp_rate)
         self.uhd_usrp_sink_0.set_center_freq(self.freq_l1, 0)
@@ -86,27 +92,6 @@ class top_block(gr.top_block):
         # Connections
         ##################################################
         self.connect((self.blocks_file_source_0, 0), (self.uhd_usrp_sink_0, 0))
-
-    def get_samp_rate(self):
-        return self.samp_rate
-
-    def set_samp_rate(self, samp_rate):
-        self.samp_rate = samp_rate
-        self.uhd_usrp_source_0.set_samp_rate(self.samp_rate)
-
-    def get_lo_off(self):
-        return self.lo_off
-
-    def set_lo_off(self, lo_off):
-        self.lo_off = lo_off
-        self.uhd_usrp_source_0.set_center_freq(uhd.tune_request(self.freq_l1, self.lo_off), 0)
-
-    def get_freq_l1(self):
-        return self.freq_l1
-
-    def set_freq_l1(self, freq_l1):
-        self.freq_l1 = freq_l1
-        self.uhd_usrp_source_0.set_center_freq(uhd.tune_request(self.freq_l1, self.lo_off), 0)
 
 if __name__ == '__main__':
     tb = top_block()
