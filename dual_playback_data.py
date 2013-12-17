@@ -23,7 +23,7 @@ class top_block(gr.top_block):
         ##################################################
         # Variables
         ##################################################
-        self.samp_rate = samp_rate = 20e6
+        self.samp_rate = samp_rate = 25e6
         self.lo_off = lo_off = 0
         self.gain = gain = 10
         self.freq_l2 = freq_l2 = 1.22760e9
@@ -33,12 +33,12 @@ class top_block(gr.top_block):
         # Blocks
         ##################################################
         self.uhd_usrp_sink_0 = uhd.usrp_sink(
-        	device_addr="addr0=192.168.10.3,addr1=192.168.10.2",
-        	stream_args=uhd.stream_args(
-        		cpu_format="sc16",
-        		otw_format="sc8",
-        		channels=range(2),
-        	),
+            device_addr="addr0=192.168.10.3,addr1=192.168.10.2",
+            stream_args=uhd.stream_args(
+                cpu_format="sc16",
+                otw_format="sc8",
+                channels=range(2),
+            ),
         )
         self.uhd_usrp_sink_0.set_clock_source("gpsdo", 0)
         self.uhd_usrp_sink_0.set_time_source("gpsdo", 0)
@@ -51,16 +51,14 @@ class top_block(gr.top_block):
         self.uhd_usrp_sink_0.set_center_freq(uhd.tune_request(freq_l2, lo_off), 1)
         self.uhd_usrp_sink_0.set_gain(gain, 1)
         self.uhd_usrp_sink_0.set_antenna("TX/RX", 1)
-        self.blocks_file_source_0 = blocks.file_sink(gr.sizeof_int*1, "/home/is4s/devel/gnuradio_gps/usrp_l2.dat", False)
-        self.blocks_file_source_0.set_unbuffered(False)
-        self.blocks_file_source_1 = blocks.file_sink(gr.sizeof_int*1, "/home/is4s/devel/gnuradio_gps/usrp_l1.dat", False)
-        self.blocks_file_source_1.set_unbuffered(False)
+        self.blocks_file_source_0 = blocks.file_source(gr.sizeof_int*1, "/media/is4s/512GB_SSD/usrp_l1_25msps.bin", False)
+        self.blocks_file_source_1 = blocks.file_source(gr.sizeof_int*1, "/media/is4s/512GB_SSD/usrp_l2_25msps.bin", False)
 
         ##################################################
         # Connections
         ##################################################
-        self.connect((self.uhd_usrp_sink_0, 0), (self.blocks_file_source_0, 0))
-        self.connect((self.uhd_usrp_sink_0, 1), (self.blocks_file_source_1, 0))
+        self.connect((self.blocks_file_source_0, 0), (self.uhd_usrp_sink_0, 0))
+        self.connect((self.blocks_file_source_1, 0), (self.uhd_usrp_sink_0, 1))
 
 
 if __name__ == '__main__':
@@ -69,5 +67,5 @@ if __name__ == '__main__':
     tb = top_block()
     tb.start()
     tb.wait()
-    tb.stop()
+
 
